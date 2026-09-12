@@ -203,6 +203,7 @@ export function createBookingPopup(options) {
     host.style.setProperty('--da-popup-width', `${config.shell.width}px`);
     host.style.setProperty('--da-popup-height', `${config.shell.height}px`);
     host.style.setProperty('--da-popup-radius', `${config.shell.borderRadius}px`);
+    dialog.lang = locale;
     dialog.setAttribute('aria-label', copy.popupLabel);
     closeButton.setAttribute('aria-label', copy.popupClose);
     iframe.setAttribute('title', copy.popupLabel);
@@ -226,6 +227,13 @@ export function createBookingPopup(options) {
       if (message.type === 'ready' && opened.sessionToken) {
         clearTimeout(opened.readyTimeout);
         iframe.contentWindow.postMessage({ protocol, channelId, type: 'init', sessionToken: opened.sessionToken, presentation }, config.serviceOrigin);
+      }
+      if (message.type === 'locale' && supportedLocales.has(message.locale)) {
+        const translated = { ...shellText[message.locale], ...(message.locale === locale ? config.texts : {}) };
+        dialog.setAttribute('aria-label', translated.popupLabel);
+        closeButton.setAttribute('aria-label', translated.popupClose);
+        iframe.setAttribute('title', translated.popupLabel);
+        dialog.lang = message.locale;
       }
       if (message.type === 'request-close') close();
       if (message.type === 'error' && message.error && typeof message.error.message === 'string') emit('error', message.error);

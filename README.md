@@ -7,7 +7,7 @@ A small, dependency-free JavaScript popup for booking meetings with a hosted Dig
 Install from a pinned GitHub tag, just like DigitCookie. No npm registry account or token is needed:
 
 ```sh
-npm install github:digitxbv/digitappointment-embed#v0.2.0
+npm install github:digitxbv/digitappointment-embed#v0.2.1
 ```
 
 Your `package.json` will contain:
@@ -15,7 +15,7 @@ Your `package.json` will contain:
 ```json
 {
   "dependencies": {
-    "@digitxbv/digitappointment": "github:digitxbv/digitappointment-embed#v0.2.0"
+    "@digitxbv/digitappointment": "github:digitxbv/digitappointment-embed#v0.2.1"
   }
 }
 ```
@@ -169,6 +169,10 @@ The popup stays within the viewport and fills small screens. Styles are isolated
 ## Language and text
 
 `locale` accepts `en`, `nl`, or `auto` (default). Automatic mode checks the product's document language, then browser languages, and falls back to English. The booking retains its language for confirmation, cancellation, and rescheduling. Authored descriptions and questions are not translated.
+
+Visitors can also choose **English / Nederlands** in the booking form, including after picking a time. The selected language is saved when they submit and remains fixed during retries and for future customer emails. Standalone links can use `?locale=en` or `?locale=nl`; the page remembers a manual choice in its URL. The admin interface stays English.
+
+When a visitor switches away from the popup's configured language, the form and popup controls use built-in translations; custom `texts` apply only to their original configured language. Returning to that language restores the overrides.
 
 Use `texts` for individual interface labels:
 
