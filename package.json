@@ -1,0 +1,25 @@
+{
+  "name": "@digitxbv/digitappointment",
+  "version": "0.2.0",
+  "description": "Framework-independent DigitAppointment booking popup",
+  "type": "module",
+  "exports": "./index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digitxbv/digitappointment-embed.git"
+  },
+  "homepage": "https://github.com/digitxbv/digitappointment-embed#readme",
+  "bugs": {
+    "url": "https://github.com/digitxbv/digitappointment-embed/issues"
+  },
+  "private": true
+}
