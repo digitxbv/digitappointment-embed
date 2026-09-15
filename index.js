@@ -24,6 +24,8 @@ const shellText = {
     invalidSession: 'De boekingsservice heeft een ongeldige popupsessie teruggegeven. Probeer het opnieuw.',
   },
 };
+const trackingKey = /^[A-Za-z0-9_.-]{1,64}$/;
+const trackingLimits = { entries: 30, valueLength: 1000, totalLength: 8000 };
 const colorFields = ['primaryColor', 'backgroundColor', 'textColor', 'calendarBackgroundColor', 'calendarTextColor', 'calendarDateColor', 'calendarSelectedColor', 'calendarSelectedTextColor'];
 const appearanceFields = new Set([...colorFields, 'fontFamily', 'borderRadius', 'width', 'height']);
 
@@ -54,6 +56,23 @@ function configuredTexts(value) {
   }
   if (total > 6000) invalid('texts may contain at most 6000 characters in total.');
   return texts;
+}
+
+function configuredTracking(value) {
+  if (value === undefined || value === null) return {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) invalid('tracking must be an object of string values.');
+  const entries = Object.entries(value);
+  if (entries.length > trackingLimits.entries) invalid(`tracking may contain at most ${trackingLimits.entries} entries.`);
+  const tracking = {};
+  let total = 0;
+  for (const [key, text] of entries) {
+    if (!trackingKey.test(key)) invalid(`tracking key '${key}' must use letters, digits, '_', '.', or '-' (1–64 characters).`);
+    if (typeof text !== 'string' || text.length > trackingLimits.valueLength) invalid(`tracking.${key} must be a string of at most ${trackingLimits.valueLength} characters.`);
+    total += key.length + text.length;
+    tracking[key] = text;
+  }
+  if (total > trackingLimits.totalLength) invalid(`tracking may contain at most ${trackingLimits.totalLength} characters in total.`);
+  return tracking;
 }
 
 function boundedNumber(appearance, name, minimum, maximum) {
@@ -125,6 +144,7 @@ function configuration(options) {
     meetingType: options.meetingType.trim(),
     locale: localeOption(options?.locale),
     texts: configuredTexts(options?.texts),
+    tracking: configuredTracking(options?.tracking),
     appearance: appearance.iframe,
     shell: appearance.shell,
     onComplete: typeof options.onComplete === 'function' ? options.onComplete : null,
@@ -170,8 +190,10 @@ export function createBookingPopup(options) {
     events.dispatchEvent(detailEvent('close'));
   }
 
-  async function open() {
+  async function open(options) {
     if (destroyed) throw popupError('This booking popup was destroyed. Create a new instance.', 'popup_destroyed');
+    // Per-open tracking (such as the page the popup opened from) merges over the configured block.
+    const tracking = configuredTracking({ ...config.tracking, ...configuredTracking(options?.tracking) });
     if (typeof window === 'undefined' || typeof document === 'undefined') throw popupError('open() is available only in a browser.', 'browser_required');
     if (current) {
       current.closeButton.focus();
@@ -226,7 +248,7 @@ export function createBookingPopup(options) {
         || message.protocol !== protocol || message.channelId !== channelId) return;
       if (message.type === 'ready' && opened.sessionToken) {
         clearTimeout(opened.readyTimeout);
-        iframe.contentWindow.postMessage({ protocol, channelId, type: 'init', sessionToken: opened.sessionToken, presentation }, config.serviceOrigin);
+        iframe.contentWindow.postMessage({ protocol, channelId, type: 'init', sessionToken: opened.sessionToken, presentation, tracking }, config.serviceOrigin);
       }
       if (message.type === 'locale' && supportedLocales.has(message.locale)) {
         const translated = { ...shellText[message.locale], ...(message.locale === locale ? config.texts : {}) };

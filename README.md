@@ -7,7 +7,7 @@ A small, dependency-free JavaScript popup for booking meetings with a hosted Dig
 Install from a pinned GitHub tag, just like DigitCookie. No npm registry account or token is needed:
 
 ```sh
-npm install github:digitxbv/digitappointment-embed#v0.2.1
+npm install github:digitxbv/digitappointment-embed#v0.3.0
 ```
 
 Your `package.json` will contain:
@@ -15,7 +15,7 @@ Your `package.json` will contain:
 ```json
 {
   "dependencies": {
-    "@digitxbv/digitappointment": "github:digitxbv/digitappointment-embed#v0.2.1"
+    "@digitxbv/digitappointment": "github:digitxbv/digitappointment-embed#v0.3.0"
   }
 }
 ```
@@ -50,6 +50,7 @@ const popup = createBookingPopup({
   projectKey: 'dap_public_REPLACE_WITH_YOUR_PUBLIC_KEY',
   meetingType: 'product-demo',
   locale: 'nl',
+  tracking: { utm_source: 'google', gclid: 'Cj0KCQjw…' }, // Optional, hidden; see below
   onComplete(booking) {
     console.log('Booked:', booking.id, booking.start, booking.host.name);
   },
@@ -187,9 +188,24 @@ texts: {
 
 Supported keys: `selectDateTime`, `yourDetails`, `confirmBooking`, `chooseAnotherTime`, `bookingConfirmed`, `rescheduleBooking`, `cancelBooking`, `popupLabel`, `popupClose`, `popupTimeout`, `networkError`. Values are plain text, 1–500 characters. HTML is displayed literally. Custom text affects this popup, not service-generated emails.
 
+## Hidden tracking metadata
+
+Pass an optional `tracking` object of string values, such as UTM parameters, ad click IDs, the landing page, the referrer, an analytics visitor ID, or the page the popup opened from. The service stores it with the booking and echoes it back unchanged in the booking-created notification that administrators configure per meeting type. It is never shown to the visitor.
+
+```js
+const popup = createBookingPopup({
+  ...access,
+  meetingType: 'product-demo',
+  tracking: { utm_source: 'google', utm_campaign: 'demo-q3', gclid: 'Cj0KCQjw…', visitor_id: 'v_8f2…' },
+});
+button.addEventListener('click', () => popup.open({ tracking: { opened_from: location.href } }));
+```
+
+Values passed to `open()` merge over the configured block for that opening. Limits: 30 entries, keys of 1–64 letters, digits, `_`, `.`, or `-`, string values up to 1,000 characters, 8,000 characters in total. Invalid blocks throw `invalid_configuration`. Older services that predate booking notifications ignore the block.
+
 ## Lifecycle and events
 
-- `await popup.open()` authorizes and opens the popup. Handle rejection for startup/network failures. Calling it again while open focuses the existing popup.
+- `await popup.open()` authorizes and opens the popup; `open({ tracking })` adds per-opening tracking values. Handle rejection for startup/network failures. Calling it again while open focuses the existing popup.
 - `popup.close()` closes it; the instance can reopen.
 - `popup.destroy()` closes it and permanently disposes the instance.
 - `popup.addEventListener('complete', event => ...)`, `'error'`, and `'close'` are also supported; payloads are in `event.detail`. Remove listeners with `removeEventListener` when appropriate.
